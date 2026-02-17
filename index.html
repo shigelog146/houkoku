@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>報告システム（Supabase）</title>
+
+  <style>
+    /* =========================================================
+       基本設定
+    ========================================================= */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Inter", "Noto Sans JP", system-ui, sans-serif;
+      background: linear-gradient(180deg, #eef3f8, #f8fafc);
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* =========================================================
+       カードUI
+    ========================================================= */
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px 18px 24px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      text-align: center;
+      color: #0f172a;
+    }
+
+    /* =========================================================
+       フォーム全体
+    ========================================================= */
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    label span.required {
+      color: #ef4444;
+      margin-left: 4px;
+    }
+
+    /* =========================================================
+       入力欄共通
+    ========================================================= */
+    input[type="text"],
+    input[type="file"],
+    button {
+      width: 100%;
+      margin-top: 6px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 15px;
+    }
+
+    input[readonly] {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #06b6d4;
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+
+    /* =========================================================
+       緯度・経度入力エリア
+    ========================================================= */
+    .coords {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .coords button {
+      grid-column: 1 / -1;
+      margin-top: 8px;
+      background: #64748b;
+    }
+
+    .coords button:hover {
+      background: #475569;
+    }
+
+    /* =========================================================
+       写真プレビュー表示
+    ========================================================= */
+    .preview {
+      margin-top: 8px;
+      height: 200px;
+      border-radius: 12px;
+      border: 2px dashed #cbd5e1;
+      background: #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 14px;
+      overflow: hidden;
+    }
+
+    .preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* =========================================================
+       送信ボタン
+    ========================================================= */
+    button[type="submit"] {
+      margin-top: 10px;
+      padding: 14px;
+      background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+    }
+
+    button[type="submit"]:hover {
+      opacity: 0.9;
+    }
+
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    /* =========================================================
+       ステータス表示
+    ========================================================= */
+    #status {
+      margin-top: 8px;
+      font-size: 14px;
+      text-align: center;
+      color: #475569;
+    }
+
+    .status-error {
+      color: #dc2626;
+      font-weight: 600;
+    }
+
+    .status-success {
+      color: #16a34a;
+      font-weight: 600;
+    }
+
+    /* =========================================================
+       モバイル対応
+    ========================================================= */
+    @media (max-width: 480px) {
+      .card {
+        padding: 18px 14px 22px;
+      }
+
+      .preview {
+        height: 180px;
+      }
+    }
+  </style>
+
+    <!-- Supabase JS v2 CDN 読み込み -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.35.0/dist/umd/supabase.min.js"></script>
+
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+</head>
+
+<body>
+  <div class="card">
+    <h2>現地報告フォーム</h2>
+
+    <!-- =======================================================
+         報告フォーム
+    ======================================================== -->
+    <form id="reportForm">
+
+      <!-- 場所名称入力 -->
+      <label>
+        場所名称
+        <input id="place" type="text" required placeholder="例: 河川敷入口" />
+      </label>
+
+      <!-- 緯度・経度表示 -->
+      <label>
+        緯度・経度
+        <div class="coords">
+          <input id="latitude" type="text" placeholder="緯度" readonly />
+          <input id="longitude" type="text" placeholder="経度" readonly />
+          <button type="button" id="getLocationBtn">取得</button>
+        </div>
+      </label>
+
+      <div id="map" style="height:300px; margin-top:10px; border-radius:12px;"></div>
+
+      <!-- 写真アップロード -->
+      <label>
+        写真
+        <input id="photo" type="file" accept="image/*" capture="environment" />
+      </label>
+
+      <!-- 写真プレビュー -->
+      <div class="preview" id="preview">写真プレビュー</div>
+
+      <!-- 備考 -->
+      <label>
+        備考
+        <input id="note" type="text" placeholder="例: 破損あり" />
+      </label>
+
+      <!-- 送信ボタン -->
+      <button type="submit">報告を送信</button>
+
+      <!-- ステータス表示 -->
+      <div id="status">準備完了</div>
+    </form>
+  </div>
+
+  <script>
+    /* =========================================================
+       Supabase 初期設定
+    ========================================================= */
+
+    // UMD版から createClient を取得
+    const { createClient } = supabase;
+
+    // プロジェクトURL
+    const SUPABASE_URL = "https://sdgdgkolzvymvhtwccyh.supabase.co";
+
+    // 匿名キー（公開用）
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZ2Rna29senZ5bXZodHdjY3loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1OTkwMzEsImV4cCI6MjA1ODE3NTAzMX0.YFWg6dpsmC-msTlk9j4a8smc0TnZB2eI3l0HhF1GLH8";
+
+    // ストレージバケット名
+    const STORAGE_BUCKET = "reports-photos";
+
+    // Supabaseクライアント生成
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    /* =========================================================
+       DOM取得
+    ========================================================= */
+    const placeInput = document.getElementById("place");
+    const latInput = document.getElementById("latitude");
+    const lonInput = document.getElementById("longitude");
+    const photoInput = document.getElementById("photo");
+    const preview = document.getElementById("preview");
+    const noteInput = document.getElementById("note");
+    const statusBox = document.getElementById("status");
+    const getLocationBtn = document.getElementById("getLocationBtn");
+    const form = document.getElementById("reportForm");
+     let map;
+     let marker;
+
+    /* =========================================================
+       ステータス表示関数
+    ========================================================= */
+    function status(txt) {
+      statusBox.textContent = txt;
+    }
+
+    /* =========================================================
+       位置情報取得処理
+    ========================================================= */
+    const DEFAULT_LAT = 34.452486;
+    const DEFAULT_LON = 131.764590;
+
+    initMap(DEFAULT_LAT, DEFAULT_LON);
+
+    getLocationBtn.addEventListener("click", () => {
+
+      // 位置情報APIが使えるか確認
+      if (!navigator.geolocation) {
+        alert("この端末では位置情報が取得できません");
+        return;
+      }
+
+      status("位置情報を取得中…");
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          // 成功時
+         const lat = pos.coords.latitude;
+         const lon = pos.coords.longitude;
+
+         latInput.value = lat.toFixed(6);
+         lonInput.value = lon.toFixed(6);
+
+          status("位置情報を取得しました");
+
+         map.setView([lat, lon], 18);
+         marker.setLatLng([lat, lon]);
+
+        },
+        (err) => {
+          // 失敗時
+          status("位置情報エラー: " + err.message);
+        }
+      );
+    });
+
+    /* =========================================================
+       地図初期化関数
+    ========================================================= */
+    function initMap(lat, lon) {
+
+      if (!map) {
+
+        map = L.map("map").setView([lat, lon], 18);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap"
+        }).addTo(map);
+
+        marker = L.marker([lat, lon], {
+          draggable: true
+        }).addTo(map);
+
+        // ピンドラッグ時
+        marker.on("dragend", function (e) {
+          const position = marker.getLatLng();
+          latInput.value = position.lat.toFixed(6);
+          lonInput.value = position.lng.toFixed(6);
+        });
+
+        // 地図クリック時
+        map.on("click", function (e) {
+          marker.setLatLng(e.latlng);
+          latInput.value = e.latlng.lat.toFixed(6);
+          lonInput.value = e.latlng.lng.toFixed(6);
+        });
+
+      } else {
+
+        map.setView([lat, lon], 18);
+        marker.setLatLng([lat, lon]);
+
+      }
+    }
+
+    /* =========================================================
+       写真プレビュー表示
+    ========================================================= */
+    photoInput.addEventListener("change", (e) => {
+
+      const file = e.target.files[0];
+
+      if (!file) {
+        preview.textContent = "写真プレビュー";
+        return;
+      }
+
+      const url = URL.createObjectURL(file);
+      preview.innerHTML = `<img src="${url}">`;
+    });
+
+    /* =========================================================
+       写真アップロード処理
+    ========================================================= */
+    async function uploadPhoto(file) {
+
+      const fileName = `report_${Date.now()}_${file.name}`;
+
+      // ストレージへアップロード
+      const { error: uploadError } =
+        await supabaseClient
+          .storage
+          .from("reports-photos")
+          .upload(fileName, file);
+
+      if (uploadError) {
+        console.error("アップロード失敗:", uploadError.message);
+        return null;
+      }
+
+      // 公開URL取得
+      const { data: publicData, error: urlError } =
+        supabaseClient
+          .storage
+          .from("reports-photos")
+          .getPublicUrl(fileName);
+
+      if (urlError) {
+        console.error("URL取得失敗:", urlError.message);
+        return null;
+      }
+
+      // path と 公開URL を返す
+      return {
+        path: fileName,
+        url: publicData.publicUrl
+      };
+    }
+
+    /* =========================================================
+       フォーム送信処理
+    ========================================================= */
+    form.addEventListener("submit", async (e) => {
+
+      e.preventDefault();
+
+      try {
+
+        status("送信中…");
+
+        // 入力値取得
+        const place = placeInput.value.trim();
+        const latitude = latInput.value || null;
+        const longitude = lonInput.value || null;
+        const note = noteInput.value.trim() || null;
+        const photoFile = photoInput.files[0];
+
+        // 必須チェック
+        if (!place) {
+          alert("場所名称を入力してください");
+          status("エラー: 場所名称が未入力です");
+          return;
+        }
+
+        if (!latitude || !longitude) {
+          alert("位置情報を取得してください");
+          status("エラー: 緯度・経度が未入力です");
+          return;
+        }
+
+        if (!photoFile) {
+          alert("写真を選択してください");
+          status("エラー: 写真が未選択です");
+          return;
+        }
+
+        // 写真アップロード実行
+        const uploaded = await uploadPhoto(photoFile);
+
+        if (!uploaded) {
+          alert("写真アップロードに失敗しました");
+          status("エラー: 写真アップロード失敗");
+          return;
+        }
+
+        // データベースへINSERT
+        const { error } =
+          await supabaseClient
+            .from("reports")
+            .insert([{
+              place_name: place,
+              latitude: Number(latitude),
+              longitude: Number(longitude),
+              photo_path: uploaded.path,
+              photo_url: uploaded.url,
+              note: note,
+              reported_at: new Date().toISOString()
+            }]);
+
+        if (error) throw error;
+
+        status("送信完了しました");
+        alert("報告を保存しました！");
+
+        // フォーム初期化
+        form.reset();
+        preview.textContent = "写真プレビュー";
+
+      } catch (err) {
+
+        console.error(err);
+        status("エラー: " + err.message);
+        alert("エラーが発生しました: " + err.message);
+
+      }
+    });
+  </script>
+</body>
+</html>
