@@ -388,9 +388,65 @@
     });
 
     /* =========================================================
+        画像圧縮処理
+    ========================================================= */
+    function compressImage(file, maxWidth = 1280, quality = 0.7) {
+      return new Promise((resolve, reject) => {
+
+        const reader = new FileReader();
+
+        reader.readAsDataURL(file);
+
+        reader.onload = (event) => {
+
+          const img = new Image();
+          img.src = event.target.result;
+
+          img.onload = () => {
+
+            let width = img.width;
+            let height = img.height;
+
+            // 横幅が大きすぎる場合のみ縮小
+            if (width > maxWidth) {
+              height = height * (maxWidth / width);
+              width = maxWidth;
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  reject(new Error("圧縮に失敗しました"));
+                  return;
+                }
+                resolve(blob);
+              },
+              "image/jpeg",
+              quality
+            );
+          };
+
+          img.onerror = reject;
+        };
+
+        reader.onerror = reject;
+      });
+    }
+
+    /* =========================================================
        写真アップロード処理
     ========================================================= */
     async function uploadPhoto(file) {
+
+      const compressedFile = await compressImage(file);
+
 
       const fileName = `report_${Date.now()}_${file.name}`;
 
@@ -398,8 +454,10 @@
       const { error: uploadError } =
         await supabaseClient
           .storage
-          .from("reports-photos")
-          .upload(fileName, file);
+          .from(STORAGE_BUCKET)
+          .upload(fileName, compressedFile, {
+            contentType: "image/jpeg"
+          });
 
       if (uploadError) {
         console.error("アップロード失敗:", uploadError.message);
@@ -407,16 +465,11 @@
       }
 
       // 公開URL取得
-      const { data: publicData, error: urlError } =
+      const { data: publicData } =
         supabaseClient
           .storage
-          .from("reports-photos")
+          .from(STORAGE_BUCKET)
           .getPublicUrl(fileName);
-
-      if (urlError) {
-        console.error("URL取得失敗:", urlError.message);
-        return null;
-      }
 
       // path と 公開URL を返す
       return {
