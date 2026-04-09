@@ -76,16 +76,7 @@
   </div>
 
   <script>
-    // ★これを一番上に追加
-    const ua = navigator.userAgent.toLowerCase();
 
-    if (ua.includes("line")) {
-      window.addEventListener("DOMContentLoaded", () => {
-        document.getElementById("lineOpen").style.display = "block";
-        // ★フォームを消す
-        document.querySelector(".card").style.display = "none";
-      });
-    }
     /* ===============================
        Supabase設定（同じもの）
     =============================== */
@@ -96,12 +87,6 @@
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZ2Rna29senZ5bXZodHdjY3loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1OTkwMzEsImV4cCI6MjA1ODE3NTAzMX0.YFWg6dpsmC-msTlk9j4a8smc0TnZB2eI3l0HhF1GLH8"
     );
 
-    <div id="lineOpen" style="display:none; text-align:center; padding:20px;">
-      <a href="https://shigelog146.github.io/houkoku/viewer.html?openExternal=1" target="_blank" rel="noopener noreferrer"
-        style="display:inline-block; padding:15px 25px; background:#000; color:#fff; text-decoration:none; border-radius:10px;">
-        ブラウザで開く
-      </a>
-    </div>
     /* ===============================
        地図初期化
     =============================== */
