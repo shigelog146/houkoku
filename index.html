@@ -3,10 +3,6 @@
 
 <head>
   <meta charset="utf-8" />
-
-  <a href="https://shigelog146.github.io/houkoku/" target="_blank">
-    Safariで開く
-  </a>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>報告システム（Supabase）</title>
 
@@ -222,6 +218,14 @@
 </head>
 
 <body>
+
+  <div id="lineOpen" style="display:none; text-align:center; padding:20px;">
+    <a href="https://shigelog146.github.io/houkoku/" target="_blank" rel="noopener noreferrer"
+      style="display:inline-block; padding:15px 25px; background:#000; color:#fff; text-decoration:none; border-radius:10px;">
+      ブラウザで開く
+    </a>
+  </div>
+
   <div class="card">
     <h2>現地報告フォーム</h2>
 
@@ -272,6 +276,18 @@
   </div>
 
   <script>
+
+    // ★これを一番上に追加
+    const ua = navigator.userAgent.toLowerCase();
+
+    if (ua.includes("line")) {
+      window.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("lineOpen").style.display = "block";
+        // ★フォームを消す
+        document.querySelector(".card").style.display = "none";
+      });
+    }
+
     /* =========================================================
        Supabase 初期設定
     ========================================================= */
