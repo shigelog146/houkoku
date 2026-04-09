@@ -3,9 +3,11 @@
 
 <head>
   <meta charset="utf-8" />
+
   <script>
-    if (navigator.userAgent.includes("Line")) {
-      window.location.href = "https://shigelog146.github.io/houkoku/";
+    const ua = navigator.userAgent.toLowerCase();
+    if (ua.includes("line")) {
+      window.location.href = "https://shigelog146.github.io/houkoku/index.html";
     }
   </script>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
