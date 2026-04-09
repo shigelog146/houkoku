@@ -298,37 +298,88 @@
 
     initMap(DEFAULT_LAT, DEFAULT_LON);
 
-    getLocationBtn.addEventListener("click", () => {
+    getLocationBtn.addEventListener("click", async () => {
 
-      // 位置情報APIが使えるか確認
       if (!navigator.geolocation) {
         alert("この端末では位置情報が取得できません");
         return;
       }
 
-      status("位置情報を取得中…");
+      try {
 
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          // 成功時
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
+        status("高精度位置情報を取得中…（数秒かかります）");
 
-          latInput.value = lat.toFixed(6);
-          lonInput.value = lon.toFixed(6);
+        const pos = await getHighAccuracyPosition();
 
-          status("位置情報を取得しました");
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        const accuracy = pos.coords.accuracy;
 
-          map.setView([lat, lon], 18);
-          marker.setLatLng([lat, lon]);
+        latInput.value = lat.toFixed(6);
+        lonInput.value = lon.toFixed(6);
 
-        },
-        (err) => {
-          // 失敗時
-          status("位置情報エラー: " + err.message);
-        }
-      );
+        status(`取得完了（誤差 約${Math.round(accuracy)}m）`);
+
+        map.setView([lat, lon], 18);
+        marker.setLatLng([lat, lon]);
+
+      } catch (err) {
+
+        status("位置情報エラー: " + err.message);
+
+      }
     });
+
+    status("位置情報を取得中…");
+
+    // ===============================
+    // 高精度GPS取得（改善版）
+    // ===============================
+    function getHighAccuracyPosition() {
+
+      return new Promise((resolve, reject) => {
+
+        let bestPosition = null;
+        let count = 0;
+        const maxTrials = 5; // ← 5回測定して一番良いものを採用
+
+        const watchId = navigator.geolocation.watchPosition(
+
+          (pos) => {
+
+            count++;
+
+            const accuracy = pos.coords.accuracy; // ← 精度（m）
+            console.log("取得精度:", accuracy, "m");
+
+            // 初回 or より精度が良い場合のみ更新
+            if (!bestPosition || accuracy < bestPosition.coords.accuracy) {
+              bestPosition = pos;
+            }
+
+            // 一定回数 or 高精度なら終了
+            if (count >= maxTrials || accuracy < 10) {
+
+              navigator.geolocation.clearWatch(watchId);
+
+              resolve(bestPosition);
+            }
+
+          },
+
+          (err) => {
+            navigator.geolocation.clearWatch(watchId);
+            reject(err);
+          },
+
+          {
+            enableHighAccuracy: true,  // ← ここが最重要
+            timeout: 10000,
+            maximumAge: 0
+          }
+        );
+      });
+    }
 
     /* =========================================================
        地図初期化関数
