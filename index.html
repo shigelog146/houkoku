@@ -185,6 +185,25 @@
         height: 180px;
       }
     }
+
+    /* ===============================
+   位置取得ボタン 状態変化
+=============================== */
+    #getLocationBtn.loading {
+      background: #f59e0b;
+      /* オレンジ */
+      cursor: wait;
+    }
+
+    #getLocationBtn.success {
+      background: #16a34a;
+      /* グリーン */
+    }
+
+    #getLocationBtn.error {
+      background: #dc2626;
+      /* 赤 */
+    }
   </style>
 
   <!-- Supabase JS v2 CDN 読み込み -->
@@ -305,6 +324,9 @@
         return;
       }
 
+      // ▼ 必ず最初に状態変更
+      setLocationBtnState("loading");
+
       try {
 
         status("高精度位置情報を取得中…（数秒かかります）");
@@ -323,10 +345,21 @@
         map.setView([lat, lon], 18);
         marker.setLatLng([lat, lon]);
 
+        setLocationBtnState("success");
+
       } catch (err) {
 
+        console.error(err);
         status("位置情報エラー: " + err.message);
 
+        setLocationBtnState("error");
+
+      } finally {
+
+        // ▼ これが最重要（必ず戻す）
+        setTimeout(() => {
+          setLocationBtnState("default");
+        }, 2000);
       }
     });
 
@@ -341,44 +374,101 @@
 
         let bestPosition = null;
         let count = 0;
-        const maxTrials = 5; // ← 5回測定して一番良いものを採用
+        const maxTrials = 5;
+
+        let finished = false; // ← 重要
 
         const watchId = navigator.geolocation.watchPosition(
 
           (pos) => {
 
+            if (finished) return;
+
             count++;
 
-            const accuracy = pos.coords.accuracy; // ← 精度（m）
+            const accuracy = pos.coords.accuracy;
             console.log("取得精度:", accuracy, "m");
 
-            // 初回 or より精度が良い場合のみ更新
+            // ベスト更新
             if (!bestPosition || accuracy < bestPosition.coords.accuracy) {
               bestPosition = pos;
             }
 
-            // 一定回数 or 高精度なら終了
+            // 終了条件
             if (count >= maxTrials || accuracy < 10) {
 
+              finished = true;
               navigator.geolocation.clearWatch(watchId);
 
               resolve(bestPosition);
             }
-
           },
 
           (err) => {
+
+            if (finished) return;
+
+            finished = true;
             navigator.geolocation.clearWatch(watchId);
+
             reject(err);
           },
 
           {
-            enableHighAccuracy: true,  // ← ここが最重要
+            enableHighAccuracy: true,
             timeout: 10000,
             maximumAge: 0
           }
         );
+
+        // ▼ これが最重要（強制終了）
+        setTimeout(() => {
+
+          if (finished) return;
+
+          finished = true;
+          navigator.geolocation.clearWatch(watchId);
+
+          if (bestPosition) {
+            resolve(bestPosition); // 途中でも返す
+          } else {
+            reject(new Error("位置情報を取得できませんでした（タイムアウト）"));
+          }
+
+        }, 12000); // 12秒で強制終了
+
       });
+    }
+
+    /* =========================================================
+       位置取得ボタンの状態管理
+    ========================================================= */
+    function setLocationBtnState(state) {
+
+      getLocationBtn.classList.remove("loading", "success", "error");
+
+      if (state === "loading") {
+        getLocationBtn.classList.add("loading");
+        getLocationBtn.textContent = "計測中...";
+        getLocationBtn.disabled = true;
+      }
+
+      if (state === "success") {
+        getLocationBtn.classList.add("success");
+        getLocationBtn.textContent = "取得完了";
+        getLocationBtn.disabled = false;
+      }
+
+      if (state === "error") {
+        getLocationBtn.classList.add("error");
+        getLocationBtn.textContent = "失敗";
+        getLocationBtn.disabled = false;
+      }
+
+      if (state === "default") {
+        getLocationBtn.textContent = "取得";
+        getLocationBtn.disabled = false;
+      }
     }
 
     /* =========================================================
