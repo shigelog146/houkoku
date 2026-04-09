@@ -3,6 +3,11 @@
 
 <head>
   <meta charset="utf-8" />
+  <script>
+    if (navigator.userAgent.includes("Line")) {
+      window.location.href = "https://your-url.com";
+    }
+  </script>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>報告システム（Supabase）</title>
 
