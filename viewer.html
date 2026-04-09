@@ -1,173 +1,190 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>報告一覧</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>報告一覧</title>
 
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.35.0/dist/umd/supabase.min.js"></script>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.35.0/dist/umd/supabase.min.js"></script>
 
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<style>
-body{
-  margin:0;
-  font-family:sans-serif;
-  background:#f1f5f9;
-}
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #f1f5f9;
+    }
 
-.container{
-  display:flex;
-  height:100vh;
-}
+    .container {
+      display: flex;
+      height: 100vh;
+    }
 
-/* 地図 */
-#map{
-  flex:2;
-}
+    /* 地図 */
+    #map {
+      flex: 2;
+    }
 
-/* 右パネル */
-.panel{
-  flex:1;
-  overflow-y:auto;
-  background:#fff;
-  border-left:1px solid #ddd;
-}
+    /* 右パネル */
+    .panel {
+      flex: 1;
+      overflow-y: auto;
+      background: #fff;
+      border-left: 1px solid #ddd;
+    }
 
-/* カード */
-.card{
-  border-bottom:1px solid #eee;
-  padding:12px;
-  cursor:pointer;
-}
+    /* カード */
+    .card {
+      border-bottom: 1px solid #eee;
+      padding: 12px;
+      cursor: pointer;
+    }
 
-.card:hover{
-  background:#f8fafc;
-}
+    .card:hover {
+      background: #f8fafc;
+    }
 
-.card img{
-  width:100%;
-  height:120px;
-  object-fit:cover;
-  border-radius:8px;
-}
+    .card img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
 
-.title{
-  font-weight:bold;
-}
+    .title {
+      font-weight: bold;
+    }
 
-.small{
-  font-size:12px;
-  color:#666;
-}
-</style>
+    .small {
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="container">
-  <div id="map"></div>
+  <div class="container">
+    <div id="map"></div>
 
-  <div class="panel" id="list"></div>
-</div>
+    <div class="panel" id="list"></div>
+  </div>
 
-<script>
+  <script>
+    // ★これを一番上に追加
+    const ua = navigator.userAgent.toLowerCase();
 
-/* ===============================
-   Supabase設定（同じもの）
-=============================== */
-const { createClient } = supabase;
+    if (ua.includes("line")) {
+      window.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("lineOpen").style.display = "block";
+        // ★フォームを消す
+        document.querySelector(".card").style.display = "none";
+      });
+    }
+    /* ===============================
+       Supabase設定（同じもの）
+    =============================== */
+    const { createClient } = supabase;
 
-const supabaseClient = createClient(
-  "https://sdgdgkolzvymvhtwccyh.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZ2Rna29senZ5bXZodHdjY3loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1OTkwMzEsImV4cCI6MjA1ODE3NTAzMX0.YFWg6dpsmC-msTlk9j4a8smc0TnZB2eI3l0HhF1GLH8"
-);
+    const supabaseClient = createClient(
+      "https://sdgdgkolzvymvhtwccyh.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZ2Rna29senZ5bXZodHdjY3loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1OTkwMzEsImV4cCI6MjA1ODE3NTAzMX0.YFWg6dpsmC-msTlk9j4a8smc0TnZB2eI3l0HhF1GLH8"
+    );
 
-/* ===============================
-   地図初期化
-=============================== */
-const map = L.map("map").setView([34.452486,131.764590], 13);
+    <div id="lineOpen" style="display:none; text-align:center; padding:20px;">
+      <a href="https://shigelog146.github.io/houkoku/viewer.html?openExternal=1" target="_blank" rel="noopener noreferrer"
+        style="display:inline-block; padding:15px 25px; background:#000; color:#fff; text-decoration:none; border-radius:10px;">
+        ブラウザで開く
+      </a>
+    </div>
+    /* ===============================
+       地図初期化
+    =============================== */
+    const map = L.map("map").setView([34.452486, 131.764590], 13);
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
-  attribution:"© OpenStreetMap"
-}).addTo(map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap"
+    }).addTo(map);
 
-/* ===============================
-   データ取得
-=============================== */
-async function loadReports(){
+    /* ===============================
+       データ取得
+    =============================== */
+    async function loadReports() {
 
-  const { data, error } =
-    await supabaseClient
-      .from("reports")
-      .select("*")
-      .order("reported_at", { ascending:false });
+      const { data, error } =
+        await supabaseClient
+          .from("reports")
+          .select("*")
+          .order("reported_at", { ascending: false });
 
-  if(error){
-    alert("取得エラー");
-    console.error(error);
-    return;
-  }
+      if (error) {
+        alert("取得エラー");
+        console.error(error);
+        return;
+      }
 
-  renderList(data);
-  renderMap(data);
-}
+      renderList(data);
+      renderMap(data);
+    }
 
-/* ===============================
-   一覧表示
-=============================== */
-function renderList(data){
+    /* ===============================
+       一覧表示
+    =============================== */
+    function renderList(data) {
 
-  const list = document.getElementById("list");
-  list.innerHTML = "";
+      const list = document.getElementById("list");
+      list.innerHTML = "";
 
-  data.forEach(item => {
+      data.forEach(item => {
 
-    const div = document.createElement("div");
-    div.className = "card";
+        const div = document.createElement("div");
+        div.className = "card";
 
-    div.innerHTML = `
+        div.innerHTML = `
       <div class="title">${item.place_name}</div>
       <div class="small">${new Date(item.reported_at).toLocaleString()}</div>
       <img src="${item.photo_url}">
       <div>${item.note || ""}</div>
     `;
 
-    div.onclick = () => {
-      map.setView([item.latitude, item.longitude], 18);
-    };
+        div.onclick = () => {
+          map.setView([item.latitude, item.longitude], 18);
+        };
 
-    list.appendChild(div);
-  });
-}
+        list.appendChild(div);
+      });
+    }
 
-/* ===============================
-   地図にピン表示
-=============================== */
-function renderMap(data){
+    /* ===============================
+       地図にピン表示
+    =============================== */
+    function renderMap(data) {
 
-  data.forEach(item => {
+      data.forEach(item => {
 
-    const marker = L.marker([item.latitude, item.longitude])
-      .addTo(map);
+        const marker = L.marker([item.latitude, item.longitude])
+          .addTo(map);
 
-    marker.bindPopup(`
+        marker.bindPopup(`
       <b>${item.place_name}</b><br>
       <img src="${item.photo_url}" width="150"><br>
       ${item.note || ""}
     `);
-  });
-}
+      });
+    }
 
-/* ===============================
-   実行
-=============================== */
-loadReports();
+    /* ===============================
+       実行
+    =============================== */
+    loadReports();
 
-</script>
+  </script>
 
 </body>
+
 </html>
