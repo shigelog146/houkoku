@@ -518,9 +518,17 @@
 
           const mapContainer = map.getContainer();
 
+          mapContainer.style.touchAction = "pan-y";
+          mapContainer.addEventListener("gesturestart", function (e) {
+            e.preventDefault();
+          });
+
+          mapContainer.addEventListener("touchmove", function (e) {
+            if (e.touches.length === 2) {
+              e.preventDefault();
+            }
+          }, { passive: false });
           let isTwoFinger = false;
-
-
 
           // ▼ ① 指が触れた瞬間
           mapContainer.addEventListener("touchstart", function (e) {
