@@ -518,16 +518,40 @@
 
           const mapContainer = map.getContainer();
 
-          // 2本指のみ操作
+          let isTwoFinger = false;
+
+
+
+          // ▼ ① 指が触れた瞬間
           mapContainer.addEventListener("touchstart", function (e) {
             if (e.touches.length === 2) {
+              isTwoFinger = true;
               map.dragging.enable();
               map.touchZoom.enable();
             }
           });
 
-          mapContainer.addEventListener("touchend", function (e) {
-            if (e.touches.length < 2) {
+          // ▼ ② 動いてる途中で2本になった時（これが超重要）
+          mapContainer.addEventListener("touchmove", function (e) {
+            if (e.touches.length === 2) {
+              if (!isTwoFinger) {
+                isTwoFinger = true;
+                map.dragging.enable();
+                map.touchZoom.enable();
+              }
+            } else {
+              if (isTwoFinger) {
+                isTwoFinger = false;
+                map.dragging.disable();
+                map.touchZoom.disable();
+              }
+            }
+          });
+
+          // ▼ ③ 指を離した時
+          mapContainer.addEventListener("touchend", function () {
+            if (isTwoFinger) {
+              isTwoFinger = false;
               map.dragging.disable();
               map.touchZoom.disable();
             }
@@ -559,46 +583,6 @@
           map.scrollWheelZoom.enable();
           map.touchZoom.enable();
         }
-
-        // 2本指のみ操作可能にする
-        const mapContainer = map.getContainer();
-
-        mapContainer.addEventListener("touchstart", function (e) {
-          if (e.touches.length === 2) {
-            map.dragging.enable();
-            map.touchZoom.enable();
-          }
-        });
-
-        mapContainer.addEventListener("touchend", function (e) {
-          if (e.touches.length < 2) {
-            map.dragging.disable();
-            map.touchZoom.disable();
-          }
-        });
-
-        // ガイド表示
-        const guide = document.createElement("div");
-        guide.innerHTML = "地図は2本指で操作";
-        guide.style.position = "absolute";
-        guide.style.top = "10px";
-        guide.style.left = "50%";
-        guide.style.transform = "translateX(-50%)";
-        guide.style.background = "rgba(0,0,0,0.6)";
-        guide.style.color = "#fff";
-        guide.style.padding = "6px 12px";
-        guide.style.borderRadius = "20px";
-        guide.style.fontSize = "12px";
-        guide.style.zIndex = "1000";
-
-        mapContainer.appendChild(guide);
-
-        // 触ったら消える
-        mapContainer.addEventListener("touchstart", () => {
-          guide.remove();
-        }, { once: true });
-
-        /* ===== ▲ここまで追加▲ ===== */
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "© OpenStreetMap"
