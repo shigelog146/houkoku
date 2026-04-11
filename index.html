@@ -504,6 +504,102 @@
 
         map = L.map("map").setView([lat, lon], 18);
 
+        /* ===== ▼ここから追加（そのまま貼る）▼ ===== */
+
+        // スクロール優先（初期は地図操作OFF）
+        // モバイル判定
+        const isMobile = /iPhone|Android.+Mobile/.test(navigator.userAgent);
+
+        if (isMobile) {
+          // スマホだけ制限
+          map.dragging.disable();
+          map.touchZoom.disable();
+          map.scrollWheelZoom.disable();
+
+          const mapContainer = map.getContainer();
+
+          // 2本指のみ操作
+          mapContainer.addEventListener("touchstart", function (e) {
+            if (e.touches.length === 2) {
+              map.dragging.enable();
+              map.touchZoom.enable();
+            }
+          });
+
+          mapContainer.addEventListener("touchend", function (e) {
+            if (e.touches.length < 2) {
+              map.dragging.disable();
+              map.touchZoom.disable();
+            }
+          });
+
+          // ガイド表示
+          const guide = document.createElement("div");
+          guide.innerHTML = "地図は2本指で操作";
+          guide.style.position = "absolute";
+          guide.style.top = "10px";
+          guide.style.left = "50%";
+          guide.style.transform = "translateX(-50%)";
+          guide.style.background = "rgba(0,0,0,0.6)";
+          guide.style.color = "#fff";
+          guide.style.padding = "6px 12px";
+          guide.style.borderRadius = "20px";
+          guide.style.fontSize = "12px";
+          guide.style.zIndex = "1000";
+
+          mapContainer.appendChild(guide);
+
+          mapContainer.addEventListener("touchstart", () => {
+            guide.remove();
+          }, { once: true });
+
+        } else {
+          // PCはフル操作OK
+          map.dragging.enable();
+          map.scrollWheelZoom.enable();
+          map.touchZoom.enable();
+        }
+
+        // 2本指のみ操作可能にする
+        const mapContainer = map.getContainer();
+
+        mapContainer.addEventListener("touchstart", function (e) {
+          if (e.touches.length === 2) {
+            map.dragging.enable();
+            map.touchZoom.enable();
+          }
+        });
+
+        mapContainer.addEventListener("touchend", function (e) {
+          if (e.touches.length < 2) {
+            map.dragging.disable();
+            map.touchZoom.disable();
+          }
+        });
+
+        // ガイド表示
+        const guide = document.createElement("div");
+        guide.innerHTML = "地図は2本指で操作";
+        guide.style.position = "absolute";
+        guide.style.top = "10px";
+        guide.style.left = "50%";
+        guide.style.transform = "translateX(-50%)";
+        guide.style.background = "rgba(0,0,0,0.6)";
+        guide.style.color = "#fff";
+        guide.style.padding = "6px 12px";
+        guide.style.borderRadius = "20px";
+        guide.style.fontSize = "12px";
+        guide.style.zIndex = "1000";
+
+        mapContainer.appendChild(guide);
+
+        // 触ったら消える
+        mapContainer.addEventListener("touchstart", () => {
+          guide.remove();
+        }, { once: true });
+
+        /* ===== ▲ここまで追加▲ ===== */
+
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "© OpenStreetMap"
         }).addTo(map);
