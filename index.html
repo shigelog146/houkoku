@@ -221,6 +221,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- アイコンライブラリ -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-gesture-handling/dist/leaflet-gesture-handling.min.css" />
+  <script src="https://unpkg.com/leaflet-gesture-handling"></script>
 </head>
 
 <body>
@@ -502,70 +504,19 @@
 
       if (!map) {
 
-        map = L.map("map").setView([lat, lon], 18);
+        // ▼ここを修正（これが正解）
+        map = L.map("map", {
+          center: [lat, lon],
+          zoom: 18,
+          gestureHandling: true   // ←これだけで制御される
+        });
 
-        /* ===== ▼ここから追加（そのまま貼る）▼ ===== */
+        const mapContainer = map.getContainer();
 
-        // スクロール優先（初期は地図操作OFF）
-        // モバイル判定
-        const isMobile = /iPhone|Android.+Mobile/.test(navigator.userAgent);
+        // ▼スマホだけガイド表示（操作には影響なし）
+        const isMobile = /iPhone|Android/.test(navigator.userAgent);
 
         if (isMobile) {
-          // スマホだけ制限
-          map.dragging.disable();
-          map.touchZoom.disable();
-          map.scrollWheelZoom.disable();
-
-          const mapContainer = map.getContainer();
-
-          mapContainer.style.touchAction = "pan-y";
-          mapContainer.addEventListener("gesturestart", function (e) {
-            e.preventDefault();
-          });
-
-          mapContainer.addEventListener("touchmove", function (e) {
-            if (e.touches.length === 2) {
-              e.preventDefault();
-            }
-          }, { passive: false });
-          let isTwoFinger = false;
-
-          // ▼ ① 指が触れた瞬間
-          mapContainer.addEventListener("touchstart", function (e) {
-            if (e.touches.length === 2) {
-              isTwoFinger = true;
-              map.dragging.enable();
-              map.touchZoom.enable();
-            }
-          });
-
-          // ▼ ② 動いてる途中で2本になった時（これが超重要）
-          mapContainer.addEventListener("touchmove", function (e) {
-            if (e.touches.length === 2) {
-              if (!isTwoFinger) {
-                isTwoFinger = true;
-                map.dragging.enable();
-                map.touchZoom.enable();
-              }
-            } else {
-              if (isTwoFinger) {
-                isTwoFinger = false;
-                map.dragging.disable();
-                map.touchZoom.disable();
-              }
-            }
-          });
-
-          // ▼ ③ 指を離した時
-          mapContainer.addEventListener("touchend", function () {
-            if (isTwoFinger) {
-              isTwoFinger = false;
-              map.dragging.disable();
-              map.touchZoom.disable();
-            }
-          });
-
-          // ガイド表示
           const guide = document.createElement("div");
           guide.innerHTML = "地図は2本指で操作";
           guide.style.position = "absolute";
@@ -584,30 +535,22 @@
           mapContainer.addEventListener("touchstart", () => {
             guide.remove();
           }, { once: true });
-
-        } else {
-          // PCはフル操作OK
-          map.dragging.enable();
-          map.scrollWheelZoom.enable();
-          map.touchZoom.enable();
         }
 
+        // タイル
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "© OpenStreetMap"
         }).addTo(map);
 
-        marker = L.marker([lat, lon], {
-          draggable: true
-        }).addTo(map);
+        // マーカー
+        marker = L.marker([lat, lon], { draggable: true }).addTo(map);
 
-        // ピンドラッグ時
-        marker.on("dragend", function (e) {
-          const position = marker.getLatLng();
-          latInput.value = position.lat.toFixed(6);
-          lonInput.value = position.lng.toFixed(6);
+        marker.on("dragend", function () {
+          const pos = marker.getLatLng();
+          latInput.value = pos.lat.toFixed(6);
+          lonInput.value = pos.lng.toFixed(6);
         });
 
-        // 地図クリック時
         map.on("click", function (e) {
           marker.setLatLng(e.latlng);
           latInput.value = e.latlng.lat.toFixed(6);
@@ -615,13 +558,10 @@
         });
 
       } else {
-
         map.setView([lat, lon], 18);
         marker.setLatLng([lat, lon]);
-
       }
     }
-
     /* =========================================================
        写真プレビュー表示
     ========================================================= */
