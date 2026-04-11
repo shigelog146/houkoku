@@ -168,13 +168,67 @@
           .addTo(map);
 
         marker.bindPopup(`
-      <b>${item.place_name}</b><br>
-      <img src="${item.photo_url}" width="150"><br>
-      ${item.note || ""}
-    `);
+  <b>${item.place_name}</b><br>
+
+  <img src="${item.photo_url}" width="150"><br>
+
+  <div style="margin-top:8px;">
+<button 
+  ontouchstart="this.style.transform='scale(0.95)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.2)';"
+  ontouchend="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.3)';"
+  onmousedown="this.style.transform='scale(0.95)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.2)';"
+  onmouseup="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.3)';"
+  onclick="startNavigation(${item.latitude}, ${item.longitude})"
+  style="
+    width:100%;
+    padding:10px;
+    background:#2563eb;
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    font-size:14px;
+    cursor:pointer;
+    box-shadow:0 4px 10px rgba(0,0,0,0.3);
+    transition:all 0.1s ease;
+  ">
+  ここへナビする
+</button>
+  </div>
+
+  <div style="margin-top:6px;">
+    ${item.note || ""}
+  </div>
+`);
       });
     }
+    /* ===============================
+       ナビ起動（Googleマップ）
+    =============================== */
+    function startNavigation(lat, lng) {
 
+      // 現在地取得（精度高め）
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const userLat = pos.coords.latitude;
+          const userLng = pos.coords.longitude;
+
+          // Googleマップ ナビURL
+          const url = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${lat},${lng}&travelmode=driving`;
+
+          // 外部ブラウザで開く
+          window.open(url, "_blank");
+        },
+        (err) => {
+          alert("現在地が取得できません");
+          console.error(err);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    }
     /* ===============================
        実行
     =============================== */
