@@ -68,7 +68,19 @@
 </head>
 
 <body>
+  <script>
+    const isLINE = /Line/i.test(navigator.userAgent);
 
+    if (isLINE) {
+      document.body.innerHTML = `
+        <div style="text-align:center; padding:40px;">
+          <h2>このページはLINE内では開けません</h2>
+          <p>右上の「︙」→「デフォルトのブラウザで開く」を押してください</p>
+        </div>
+      `;
+      throw new Error("LINE browser blocked");
+    }
+  </script>
   <div class="container">
     <div id="map"></div>
 
