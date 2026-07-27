@@ -29,15 +29,15 @@
     .card {
       background: #ffffff;
       border-radius: 16px;
-      padding: 20px 18px 24px;
+      padding: 14px 14px 16px;
       max-width: 520px;
       width: 100%;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     }
 
     .card h2 {
-      margin: 0 0 12px;
-      font-size: 20px;
+      margin: 0 0 8px;
+      font-size: 17px;
       text-align: center;
       color: #0f172a;
     }
@@ -48,11 +48,11 @@
     form {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 8px;
     }
 
     label {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: #334155;
     }
@@ -69,11 +69,11 @@
     input[type="file"],
     button {
       width: 100%;
-      margin-top: 6px;
-      padding: 12px 14px;
-      border-radius: 10px;
+      margin-top: 4px;
+      padding: 8px 10px;
+      border-radius: 8px;
       border: 1px solid #cbd5e1;
-      font-size: 15px;
+      font-size: 13px;
     }
 
     input[readonly] {
@@ -92,14 +92,24 @@
     ========================================================= */
     .coords {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 6px;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 6px;
+      margin-top: 4px;
+      align-items: center;
+    }
+
+    .coords input {
+      font-size: 12px;
+      padding: 6px 8px;
+      margin-top: 0;
     }
 
     .coords button {
-      grid-column: 1 / -1;
-      margin-top: 8px;
+      width: auto;
+      white-space: nowrap;
+      margin-top: 0;
+      padding: 6px 10px;
+      font-size: 12px;
       background: #64748b;
     }
 
@@ -111,16 +121,20 @@
        写真プレビュー表示
     ========================================================= */
     .preview {
-      margin-top: 8px;
-      height: 200px;
-      border-radius: 12px;
+      margin-top: 4px;
+      height: 60px;
+      width: 60px;
+      border-radius: 8px;
       border: 2px dashed #cbd5e1;
       background: #f8fafc;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #94a3b8;
-      font-size: 14px;
+      font-size: 10px;
+      text-align: center;
+      line-height: 1.2;
+      padding: 2px;
       overflow: hidden;
     }
 
@@ -134,11 +148,11 @@
        送信ボタン
     ========================================================= */
     button[type="submit"] {
-      margin-top: 10px;
-      padding: 14px;
+      margin-top: 6px;
+      padding: 10px;
       background: linear-gradient(135deg, #06b6d4, #0ea5e9);
       color: #ffffff;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 700;
       border: none;
       cursor: pointer;
@@ -157,8 +171,8 @@
        ステータス表示
     ========================================================= */
     #status {
-      margin-top: 8px;
-      font-size: 14px;
+      margin-top: 4px;
+      font-size: 12px;
       text-align: center;
       color: #475569;
     }
@@ -178,11 +192,12 @@
     ========================================================= */
     @media (max-width: 480px) {
       .card {
-        padding: 18px 14px 22px;
+        padding: 12px 10px 14px;
       }
 
       .preview {
-        height: 180px;
+        height: 50px;
+        width: 50px;
       }
     }
 
@@ -206,8 +221,10 @@
     }
 
     svg.lucide {
-      width: 32px !important;
-      height: 32px !important;
+      width: 18px !important;
+      height: 18px !important;
+      vertical-align: -3px;
+      margin-right: 4px;
     }
   </style>
 
@@ -256,16 +273,16 @@
         </div>
       </label>
 
-      <div id="map" style="height:300px; margin-top:10px; border-radius:12px;"></div>
+      <div id="map" style="height:150px; margin-top:6px; border-radius:10px;"></div>
 
       <!-- 写真アップロード -->
       <label>
         写真
-        <input id="photo" type="file" accept="image/*" capture="environment" />
+        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+          <input id="photo" type="file" accept="image/*" capture="environment" style="margin-top:0; flex:1;" />
+          <div class="preview" id="preview" style="flex-shrink:0; margin-top:0;">未選択</div>
+        </div>
       </label>
-
-      <!-- 写真プレビュー -->
-      <div class="preview" id="preview">写真プレビュー</div>
 
       <!-- 備考 -->
       <label>
@@ -573,7 +590,7 @@
       const file = e.target.files[0];
 
       if (!file) {
-        preview.textContent = "写真プレビュー";
+        preview.textContent = "未選択";
         submitBtn.disabled = true;
         return;
       }
@@ -742,7 +759,7 @@
 
         // フォーム初期化
         form.reset();
-        preview.textContent = "写真プレビュー";
+        preview.textContent = "未選択";
 
       } catch (err) {
 
