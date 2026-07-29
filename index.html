@@ -1,780 +1,777 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>報告システム（Supabase）</title>
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>報告システム（Supabase）</title>
-
-  <style>
-    /* =========================================================
+    <style>
+      /* =========================================================
        基本設定
     ========================================================= */
-    * {
-      box-sizing: border-box;
-    }
+      * {
+        box-sizing: border-box;
+      }
 
-    body {
-      font-family: "Inter", "Noto Sans JP", system-ui, sans-serif;
-      background: linear-gradient(180deg, #eef3f8, #f8fafc);
-      margin: 0;
-      padding: 16px;
-      display: flex;
-      justify-content: center;
-    }
+      body {
+        font-family: "Inter", "Noto Sans JP", system-ui, sans-serif;
+        background: linear-gradient(180deg, #eef3f8, #f8fafc);
+        margin: 0;
+        padding: 16px;
+        display: flex;
+        justify-content: center;
+      }
 
-    /* =========================================================
+      /* =========================================================
        カードUI
     ========================================================= */
-    .card {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 14px 14px 16px;
-      max-width: 520px;
-      width: 100%;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    }
+      .card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 14px 14px 16px;
+        max-width: 520px;
+        width: 100%;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      }
 
-    .card h2 {
-      margin: 0 0 8px;
-      font-size: 17px;
-      text-align: center;
-      color: #0f172a;
-    }
+      .card h2 {
+        margin: 0 0 8px;
+        font-size: 17px;
+        text-align: center;
+        color: #0f172a;
+      }
 
-    /* =========================================================
+      /* =========================================================
        フォーム全体
     ========================================================= */
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
 
-    label {
-      font-size: 13px;
-      font-weight: 600;
-      color: #334155;
-    }
+      label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+      }
 
-    label span.required {
-      color: #ef4444;
-      margin-left: 4px;
-    }
+      label span.required {
+        color: #ef4444;
+        margin-left: 4px;
+      }
 
-    /* =========================================================
+      /* =========================================================
        入力欄共通
     ========================================================= */
-    input[type="text"],
-    input[type="file"],
-    button {
-      width: 100%;
-      margin-top: 4px;
-      padding: 8px 10px;
-      border-radius: 8px;
-      border: 1px solid #cbd5e1;
-      font-size: 13px;
-    }
+      input[type="text"],
+      input[type="file"],
+      button {
+        width: 100%;
+        margin-top: 4px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-size: 13px;
+      }
 
-    input[readonly] {
-      background: #f1f5f9;
-      color: #64748b;
-    }
+      input[readonly] {
+        background: #f1f5f9;
+        color: #64748b;
+      }
 
-    input:focus {
-      outline: none;
-      border-color: #06b6d4;
-      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
-    }
+      input:focus {
+        outline: none;
+        border-color: #06b6d4;
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+      }
 
-    /* =========================================================
+      /* =========================================================
        緯度・経度入力エリア
     ========================================================= */
-    .coords {
-      display: grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap: 6px;
-      margin-top: 4px;
-      align-items: center;
-    }
+      .coords {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 6px;
+        margin-top: 4px;
+        align-items: center;
+      }
 
-    .coords input {
-      font-size: 12px;
-      padding: 6px 8px;
-      margin-top: 0;
-    }
+      .coords input {
+        font-size: 12px;
+        padding: 6px 8px;
+        margin-top: 0;
+      }
 
-    .coords button {
-      width: auto;
-      white-space: nowrap;
-      margin-top: 0;
-      padding: 6px 10px;
-      font-size: 12px;
-      background: #64748b;
-    }
+      .coords button {
+        width: auto;
+        white-space: nowrap;
+        margin-top: 0;
+        padding: 6px 10px;
+        font-size: 12px;
+        background: #64748b;
+      }
 
-    .coords button:hover {
-      background: #475569;
-    }
+      .coords button:hover {
+        background: #475569;
+      }
 
-    /* =========================================================
+      /* =========================================================
        写真プレビュー表示
     ========================================================= */
-    .preview {
-      margin-top: 4px;
-      height: 60px;
-      width: 60px;
-      border-radius: 8px;
-      border: 2px dashed #cbd5e1;
-      background: #f8fafc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #94a3b8;
-      font-size: 10px;
-      text-align: center;
-      line-height: 1.2;
-      padding: 2px;
-      overflow: hidden;
-    }
+      .preview {
+        margin-top: 4px;
+        height: 60px;
+        width: 60px;
+        border-radius: 8px;
+        border: 2px dashed #cbd5e1;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        font-size: 10px;
+        text-align: center;
+        line-height: 1.2;
+        padding: 2px;
+        overflow: hidden;
+      }
 
-    .preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+      .preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
 
-    /* =========================================================
+      /* =========================================================
        送信ボタン
     ========================================================= */
-    button[type="submit"] {
-      margin-top: 6px;
-      padding: 10px;
-      background: linear-gradient(135deg, #06b6d4, #0ea5e9);
-      color: #ffffff;
-      font-size: 14px;
-      font-weight: 700;
-      border: none;
-      cursor: pointer;
-    }
+      button[type="submit"] {
+        margin-top: 6px;
+        padding: 10px;
+        background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+      }
 
-    button[type="submit"]:hover {
-      opacity: 0.9;
-    }
+      button[type="submit"]:hover {
+        opacity: 0.9;
+      }
 
-    button:disabled {
-      background: #94a3b8;
-      cursor: not-allowed;
-    }
+      button:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+      }
 
-    /* =========================================================
+      /* =========================================================
        ステータス表示
     ========================================================= */
-    #status {
-      margin-top: 4px;
-      font-size: 12px;
-      text-align: center;
-      color: #475569;
-    }
+      #status {
+        margin-top: 4px;
+        font-size: 12px;
+        text-align: center;
+        color: #475569;
+      }
 
-    .status-error {
-      color: #dc2626;
-      font-weight: 600;
-    }
+      .status-error {
+        color: #dc2626;
+        font-weight: 600;
+      }
 
-    .status-success {
-      color: #16a34a;
-      font-weight: 600;
-    }
+      .status-success {
+        color: #16a34a;
+        font-weight: 600;
+      }
 
-    /* =========================================================
+      /* =========================================================
        モバイル対応
     ========================================================= */
-    @media (max-width: 480px) {
-      .card {
-        padding: 12px 10px 14px;
+      @media (max-width: 480px) {
+        .card {
+          padding: 12px 10px 14px;
+        }
+
+        .preview {
+          height: 50px;
+          width: 50px;
+        }
       }
 
-      .preview {
-        height: 50px;
-        width: 50px;
-      }
-    }
-
-    /* ===============================
+      /* ===============================
    位置取得ボタン 状態変化
 =============================== */
-    #getLocationBtn.loading {
-      background: #f59e0b;
-      /* オレンジ */
-      cursor: wait;
-    }
+      #getLocationBtn.loading {
+        background: #f59e0b;
+        /* オレンジ */
+        cursor: wait;
+      }
 
-    #getLocationBtn.success {
-      background: #16a34a;
-      /* グリーン */
-    }
+      #getLocationBtn.success {
+        background: #16a34a;
+        /* グリーン */
+      }
 
-    #getLocationBtn.error {
-      background: #dc2626;
-      /* 赤 */
-    }
+      #getLocationBtn.error {
+        background: #dc2626;
+        /* 赤 */
+      }
 
-    svg.lucide {
-      width: 18px !important;
-      height: 18px !important;
-      vertical-align: -3px;
-      margin-right: 4px;
-    }
-  </style>
+      svg.lucide {
+        width: 18px !important;
+        height: 18px !important;
+        vertical-align: -3px;
+        margin-right: 4px;
+      }
+    </style>
 
-  <!-- Supabase JS v2 CDN 読み込み -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.35.0/dist/umd/supabase.min.js"></script>
+    <!-- Supabase JS v2 CDN 読み込み -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.35.0/dist/umd/supabase.min.js"></script>
 
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- アイコンライブラリ -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-gesture-handling/dist/leaflet-gesture-handling.min.css" />
-  <script src="https://unpkg.com/leaflet-gesture-handling"></script>
-</head>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- アイコンライブラリ -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet-gesture-handling/dist/leaflet-gesture-handling.min.css"
+    />
+    <script src="https://unpkg.com/leaflet-gesture-handling"></script>
+  </head>
 
-<body>
+  <body>
+    <div
+      id="lineGuide"
+      style="display: none; text-align: center; padding: 30px"
+    >
+      <h2>ブラウザで開いてください</h2>
+      <p>右下の「︙」→「ブラウザで開く」を選択してください</p>
+    </div>
 
-  <div id="lineGuide" style="display:none; text-align:center; padding:30px;">
-    <h2>ブラウザで開いてください</h2>
-    <p>右下の「︙」→「ブラウザで開く」を選択してください</p>
-  </div>
+    <div class="card">
+      <h2><i data-lucide="clipboard-list"></i>現地報告フォーム</h2>
 
-  <div class="card">
-    <h2><i data-lucide="clipboard-list"></i>現地報告フォーム</h2>
-
-    <!-- =======================================================
+      <!-- =======================================================
          報告フォーム
     ======================================================== -->
-    <form id="reportForm">
+      <form id="reportForm">
+        <!-- 場所名称入力 -->
+        <label>
+          場所名称
+          <input id="place" type="text" required placeholder="例: 河川敷入口" />
+        </label>
 
-      <!-- 場所名称入力 -->
-      <label>
-        場所名称
-        <input id="place" type="text" required placeholder="例: 河川敷入口" />
-      </label>
+        <!-- 緯度・経度表示 -->
+        <label>
+          緯度・経度
+          <div class="coords">
+            <input id="latitude" type="text" placeholder="緯度" readonly />
+            <input id="longitude" type="text" placeholder="経度" readonly />
+            <button type="button" id="getLocationBtn">取得</button>
+          </div>
+        </label>
 
-      <!-- 緯度・経度表示 -->
-      <label>
-        緯度・経度
-        <div class="coords">
-          <input id="latitude" type="text" placeholder="緯度" readonly />
-          <input id="longitude" type="text" placeholder="経度" readonly />
-          <button type="button" id="getLocationBtn">取得</button>
-        </div>
-      </label>
+        <div
+          id="map"
+          style="height: 250px; margin-top: 6px; border-radius: 10px"
+        ></div>
 
-      <div id="map" style="height:150px; margin-top:6px; border-radius:10px;"></div>
+        <!-- 写真アップロード -->
+        <label>
+          写真
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-top: 4px;
+            "
+          >
+            <input
+              id="photo"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              style="margin-top: 0; flex: 1"
+            />
+            <div
+              class="preview"
+              id="preview"
+              style="flex-shrink: 0; margin-top: 0"
+            >
+              未選択
+            </div>
+          </div>
+        </label>
 
-      <!-- 写真アップロード -->
-      <label>
-        写真
-        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
-          <input id="photo" type="file" accept="image/*" capture="environment" style="margin-top:0; flex:1;" />
-          <div class="preview" id="preview" style="flex-shrink:0; margin-top:0;">未選択</div>
-        </div>
-      </label>
+        <!-- 備考 -->
+        <label>
+          備考
+          <input id="note" type="text" placeholder="例: 破損あり" />
+        </label>
 
-      <!-- 備考 -->
-      <label>
-        備考
-        <input id="note" type="text" placeholder="例: 破損あり" />
-      </label>
+        <!-- 送信ボタン -->
+        <button type="submit">報告を送信</button>
 
-      <!-- 送信ボタン -->
-      <button type="submit">報告を送信</button>
+        <!-- ステータス表示 -->
+        <div id="status">準備完了</div>
+      </form>
+    </div>
 
-      <!-- ステータス表示 -->
-      <div id="status">準備完了</div>
-    </form>
-  </div>
+    <script>
+      // ★これを一番上に追加
+      const ua = navigator.userAgent.toLowerCase();
 
-  <script>
+      if (ua.includes("line")) {
+        window.addEventListener("DOMContentLoaded", () => {
+          document.getElementById("lineOpen").style.display = "block";
+          // ★フォームを消す
+          document.querySelector(".card").style.display = "none";
+        });
+      }
 
-    // ★これを一番上に追加
-    const ua = navigator.userAgent.toLowerCase();
-
-    if (ua.includes("line")) {
-      window.addEventListener("DOMContentLoaded", () => {
-        document.getElementById("lineOpen").style.display = "block";
-        // ★フォームを消す
-        document.querySelector(".card").style.display = "none";
-      });
-    }
-
-    /* =========================================================
+      /* =========================================================
        Supabase 初期設定
     ========================================================= */
 
-    // UMD版から createClient を取得
-    const { createClient } = supabase;
+      // UMD版から createClient を取得
+      const { createClient } = supabase;
 
-    // プロジェクトURL
-    const SUPABASE_URL = "https://sdgdgkolzvymvhtwccyh.supabase.co";
+      // プロジェクトURL
+      const SUPABASE_URL = "https://sdgdgkolzvymvhtwccyh.supabase.co";
 
-    // 匿名キー（公開用）
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZ2Rna29senZ5bXZodHdjY3loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1OTkwMzEsImV4cCI6MjA1ODE3NTAzMX0.YFWg6dpsmC-msTlk9j4a8smc0TnZB2eI3l0HhF1GLH8";
+      // 匿名キー（公開用）
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkZ2Rna29senZ5bXZodHdjY3loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1OTkwMzEsImV4cCI6MjA1ODE3NTAzMX0.YFWg6dpsmC-msTlk9j4a8smc0TnZB2eI3l0HhF1GLH8";
 
-    // ストレージバケット名
-    const STORAGE_BUCKET = "reports-photos";
+      // ストレージバケット名
+      const STORAGE_BUCKET = "reports-photos";
 
-    // Supabaseクライアント生成
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      // Supabaseクライアント生成
+      const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    /* =========================================================
+      /* =========================================================
        DOM取得
     ========================================================= */
-    const placeInput = document.getElementById("place");
-    const latInput = document.getElementById("latitude");
-    const lonInput = document.getElementById("longitude");
-    const photoInput = document.getElementById("photo");
-    const preview = document.getElementById("preview");
-    const noteInput = document.getElementById("note");
-    const statusBox = document.getElementById("status");
-    const getLocationBtn = document.getElementById("getLocationBtn");
-    const form = document.getElementById("reportForm");
-    let map;
-    let marker;
+      const placeInput = document.getElementById("place");
+      const latInput = document.getElementById("latitude");
+      const lonInput = document.getElementById("longitude");
+      const photoInput = document.getElementById("photo");
+      const preview = document.getElementById("preview");
+      const noteInput = document.getElementById("note");
+      const statusBox = document.getElementById("status");
+      const getLocationBtn = document.getElementById("getLocationBtn");
+      const form = document.getElementById("reportForm");
+      let map;
+      let marker;
 
-    /* =========================================================
+      /* =========================================================
        ステータス表示関数
     ========================================================= */
-    function status(txt) {
-      statusBox.textContent = txt;
-    }
+      function status(txt) {
+        statusBox.textContent = txt;
+      }
 
-    /* =========================================================
+      /* =========================================================
        位置情報取得処理
     ========================================================= */
-    const DEFAULT_LAT = 34.452486;
-    const DEFAULT_LON = 131.764590;
+      const DEFAULT_LAT = 34.452486;
+      const DEFAULT_LON = 131.76459;
 
-    initMap(DEFAULT_LAT, DEFAULT_LON);
+      initMap(DEFAULT_LAT, DEFAULT_LON);
 
-    getLocationBtn.addEventListener("click", async () => {
+      getLocationBtn.addEventListener("click", async () => {
+        if (!navigator.geolocation) {
+          alert("この端末では位置情報が取得できません");
+          return;
+        }
 
-      if (!navigator.geolocation) {
-        alert("この端末では位置情報が取得できません");
-        return;
-      }
+        // ▼ 必ず最初に状態変更
+        setLocationBtnState("loading");
 
-      // ▼ 必ず最初に状態変更
-      setLocationBtnState("loading");
+        try {
+          status("高精度位置情報を取得中…（数秒かかります）");
 
-      try {
+          const pos = await getHighAccuracyPosition();
 
-        status("高精度位置情報を取得中…（数秒かかります）");
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          const accuracy = pos.coords.accuracy;
 
-        const pos = await getHighAccuracyPosition();
+          latInput.value = lat.toFixed(6);
+          lonInput.value = lon.toFixed(6);
 
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        const accuracy = pos.coords.accuracy;
+          status(`取得完了（誤差 約${Math.round(accuracy)}m）`);
 
-        latInput.value = lat.toFixed(6);
-        lonInput.value = lon.toFixed(6);
+          map.setView([lat, lon], 18);
+          marker.setLatLng([lat, lon]);
 
-        status(`取得完了（誤差 約${Math.round(accuracy)}m）`);
+          setLocationBtnState("success");
+        } catch (err) {
+          console.error(err);
+          status("位置情報エラー: " + err.message);
 
-        map.setView([lat, lon], 18);
-        marker.setLatLng([lat, lon]);
+          setLocationBtnState("error");
+        } finally {
+          // ▼ これが最重要（必ず戻す）
+          setTimeout(() => {
+            setLocationBtnState("default");
+          }, 2000);
+        }
+      });
 
-        setLocationBtnState("success");
+      status("位置情報を取得中…");
 
-      } catch (err) {
+      // ===============================
+      // 高精度GPS取得（改善版）
+      // ===============================
+      function getHighAccuracyPosition() {
+        return new Promise((resolve, reject) => {
+          let bestPosition = null;
+          let count = 0;
+          const maxTrials = 5;
 
-        console.error(err);
-        status("位置情報エラー: " + err.message);
+          let finished = false; // ← 重要
 
-        setLocationBtnState("error");
+          const watchId = navigator.geolocation.watchPosition(
+            (pos) => {
+              if (finished) return;
 
-      } finally {
+              count++;
 
-        // ▼ これが最重要（必ず戻す）
-        setTimeout(() => {
-          setLocationBtnState("default");
-        }, 2000);
-      }
-    });
+              const accuracy = pos.coords.accuracy;
+              console.log("取得精度:", accuracy, "m");
 
-    status("位置情報を取得中…");
+              // ベスト更新
+              if (!bestPosition || accuracy < bestPosition.coords.accuracy) {
+                bestPosition = pos;
+              }
 
-    // ===============================
-    // 高精度GPS取得（改善版）
-    // ===============================
-    function getHighAccuracyPosition() {
+              // 終了条件
+              if (count >= maxTrials || accuracy < 10) {
+                finished = true;
+                navigator.geolocation.clearWatch(watchId);
 
-      return new Promise((resolve, reject) => {
+                resolve(bestPosition);
+              }
+            },
 
-        let bestPosition = null;
-        let count = 0;
-        const maxTrials = 5;
-
-        let finished = false; // ← 重要
-
-        const watchId = navigator.geolocation.watchPosition(
-
-          (pos) => {
-
-            if (finished) return;
-
-            count++;
-
-            const accuracy = pos.coords.accuracy;
-            console.log("取得精度:", accuracy, "m");
-
-            // ベスト更新
-            if (!bestPosition || accuracy < bestPosition.coords.accuracy) {
-              bestPosition = pos;
-            }
-
-            // 終了条件
-            if (count >= maxTrials || accuracy < 10) {
+            (err) => {
+              if (finished) return;
 
               finished = true;
               navigator.geolocation.clearWatch(watchId);
 
-              resolve(bestPosition);
-            }
-          },
+              reject(err);
+            },
 
-          (err) => {
+            {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0,
+            },
+          );
 
+          // ▼ これが最重要（強制終了）
+          setTimeout(() => {
             if (finished) return;
 
             finished = true;
             navigator.geolocation.clearWatch(watchId);
 
-            reject(err);
-          },
+            if (bestPosition) {
+              resolve(bestPosition); // 途中でも返す
+            } else {
+              reject(
+                new Error("位置情報を取得できませんでした（タイムアウト）"),
+              );
+            }
+          }, 12000); // 12秒で強制終了
+        });
+      }
 
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-          }
-        );
-
-        // ▼ これが最重要（強制終了）
-        setTimeout(() => {
-
-          if (finished) return;
-
-          finished = true;
-          navigator.geolocation.clearWatch(watchId);
-
-          if (bestPosition) {
-            resolve(bestPosition); // 途中でも返す
-          } else {
-            reject(new Error("位置情報を取得できませんでした（タイムアウト）"));
-          }
-
-        }, 12000); // 12秒で強制終了
-
-      });
-    }
-
-    /* =========================================================
+      /* =========================================================
        位置取得ボタンの状態管理
     ========================================================= */
-    function setLocationBtnState(state) {
+      function setLocationBtnState(state) {
+        getLocationBtn.classList.remove("loading", "success", "error");
 
-      getLocationBtn.classList.remove("loading", "success", "error");
-
-      if (state === "loading") {
-        getLocationBtn.classList.add("loading");
-        getLocationBtn.textContent = "計測中...";
-        getLocationBtn.disabled = true;
-      }
-
-      if (state === "success") {
-        getLocationBtn.classList.add("success");
-        getLocationBtn.textContent = "取得完了";
-        getLocationBtn.disabled = false;
-      }
-
-      if (state === "error") {
-        getLocationBtn.classList.add("error");
-        getLocationBtn.textContent = "失敗";
-        getLocationBtn.disabled = false;
-      }
-
-      if (state === "default") {
-        getLocationBtn.textContent = "取得";
-        getLocationBtn.disabled = false;
-      }
-    }
-
-    /* =========================================================
-       地図初期化関数
-    ========================================================= */
-    function initMap(lat, lon) {
-
-      if (!map) {
-
-        // ▼ここを修正（これが正解）
-        map = L.map("map", {
-          center: [lat, lon],
-          zoom: 18,
-          gestureHandling: true   // ←これだけで制御される
-        });
-
-        const mapContainer = map.getContainer();
-
-        // ▼スマホだけガイド表示（操作には影響なし）
-        const isMobile = /iPhone|Android/.test(navigator.userAgent);
-
-        if (isMobile) {
-          const guide = document.createElement("div");
-          guide.innerHTML = "地図は2本指で操作";
-          guide.style.position = "absolute";
-          guide.style.top = "10px";
-          guide.style.left = "50%";
-          guide.style.transform = "translateX(-50%)";
-          guide.style.background = "rgba(0,0,0,0.6)";
-          guide.style.color = "#fff";
-          guide.style.padding = "6px 12px";
-          guide.style.borderRadius = "20px";
-          guide.style.fontSize = "12px";
-          guide.style.zIndex = "1000";
-
-          mapContainer.appendChild(guide);
-
-          mapContainer.addEventListener("touchstart", () => {
-            guide.remove();
-          }, { once: true });
+        if (state === "loading") {
+          getLocationBtn.classList.add("loading");
+          getLocationBtn.textContent = "計測中...";
+          getLocationBtn.disabled = true;
         }
 
-        // タイル
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "© OpenStreetMap"
-        }).addTo(map);
+        if (state === "success") {
+          getLocationBtn.classList.add("success");
+          getLocationBtn.textContent = "取得完了";
+          getLocationBtn.disabled = false;
+        }
 
-        // マーカー
-        marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+        if (state === "error") {
+          getLocationBtn.classList.add("error");
+          getLocationBtn.textContent = "失敗";
+          getLocationBtn.disabled = false;
+        }
 
-        marker.on("dragend", function () {
-          const pos = marker.getLatLng();
-          latInput.value = pos.lat.toFixed(6);
-          lonInput.value = pos.lng.toFixed(6);
-        });
-
-        map.on("click", function (e) {
-          marker.setLatLng(e.latlng);
-          latInput.value = e.latlng.lat.toFixed(6);
-          lonInput.value = e.latlng.lng.toFixed(6);
-        });
-
-      } else {
-        map.setView([lat, lon], 18);
-        marker.setLatLng([lat, lon]);
-      }
-    }
-    /* =========================================================
-       写真プレビュー表示
-    ========================================================= */
-    const submitBtn = document.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-
-    photoInput.addEventListener("change", (e) => {
-
-      const file = e.target.files[0];
-
-      if (!file) {
-        preview.textContent = "未選択";
-        submitBtn.disabled = true;
-        return;
+        if (state === "default") {
+          getLocationBtn.textContent = "取得";
+          getLocationBtn.disabled = false;
+        }
       }
 
-      const url = URL.createObjectURL(file);
-      preview.innerHTML = `<img src="${url}">`;
-
-      submitBtn.disabled = false;
-    });
-
-    /* =========================================================
-        画像圧縮処理
+      /* =========================================================
+       地図初期化関数
     ========================================================= */
-    function compressImage(file, maxWidth = 1280, quality = 0.7) {
-      return new Promise((resolve, reject) => {
-
-        const reader = new FileReader();
-
-        reader.readAsDataURL(file);
-
-        reader.onload = (event) => {
-
-          const img = new Image();
-          img.src = event.target.result;
-
-          img.onload = () => {
-
-            let width = img.width;
-            let height = img.height;
-
-            // 横幅が大きすぎる場合のみ縮小
-            if (width > maxWidth) {
-              height = height * (maxWidth / width);
-              width = maxWidth;
-            }
-
-            const canvas = document.createElement("canvas");
-            canvas.width = width;
-            canvas.height = height;
-
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0, width, height);
-
-            canvas.toBlob(
-              (blob) => {
-                if (!blob) {
-                  reject(new Error("圧縮に失敗しました"));
-                  return;
-                }
-                resolve(blob);
-              },
-              "image/jpeg",
-              quality
-            );
-          };
-
-          img.onerror = reject;
-        };
-
-        reader.onerror = reject;
-      });
-    }
-
-    /* =========================================================
-       写真アップロード処理
-    ========================================================= */
-    async function uploadPhoto(file) {
-
-      const compressedFile = await compressImage(file);
-
-
-      const fileName = `report_${Date.now()}_${file.name}`;
-
-      // ストレージへアップロード
-      const { error: uploadError } =
-        await supabaseClient
-          .storage
-          .from(STORAGE_BUCKET)
-          .upload(fileName, compressedFile, {
-            contentType: "image/jpeg"
+      function initMap(lat, lon) {
+        if (!map) {
+          // ▼ここを修正（これが正解）
+          map = L.map("map", {
+            center: [lat, lon],
+            zoom: 18,
+            gestureHandling: true, // ←これだけで制御される
           });
 
-      if (uploadError) {
-        console.error("アップロード失敗:", uploadError.message);
-        return null;
+          const mapContainer = map.getContainer();
+
+          // ▼スマホだけガイド表示（操作には影響なし）
+          const isMobile = /iPhone|Android/.test(navigator.userAgent);
+
+          if (isMobile) {
+            const guide = document.createElement("div");
+            guide.innerHTML = "地図は2本指で操作";
+            guide.style.position = "absolute";
+            guide.style.top = "10px";
+            guide.style.left = "50%";
+            guide.style.transform = "translateX(-50%)";
+            guide.style.background = "rgba(0,0,0,0.6)";
+            guide.style.color = "#fff";
+            guide.style.padding = "6px 12px";
+            guide.style.borderRadius = "20px";
+            guide.style.fontSize = "12px";
+            guide.style.zIndex = "1000";
+
+            mapContainer.appendChild(guide);
+
+            mapContainer.addEventListener(
+              "touchstart",
+              () => {
+                guide.remove();
+              },
+              { once: true },
+            );
+          }
+
+          // タイル
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "© OpenStreetMap",
+          }).addTo(map);
+
+          // マーカー
+          marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+
+          marker.on("dragend", function () {
+            const pos = marker.getLatLng();
+            latInput.value = pos.lat.toFixed(6);
+            lonInput.value = pos.lng.toFixed(6);
+          });
+
+          map.on("click", function (e) {
+            marker.setLatLng(e.latlng);
+            latInput.value = e.latlng.lat.toFixed(6);
+            lonInput.value = e.latlng.lng.toFixed(6);
+          });
+        } else {
+          map.setView([lat, lon], 18);
+          marker.setLatLng([lat, lon]);
+        }
+      }
+      /* =========================================================
+       写真プレビュー表示
+    ========================================================= */
+      const submitBtn = document.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+
+      photoInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+
+        if (!file) {
+          preview.textContent = "未選択";
+          submitBtn.disabled = true;
+          return;
+        }
+
+        const url = URL.createObjectURL(file);
+        preview.innerHTML = `<img src="${url}">`;
+
+        submitBtn.disabled = false;
+      });
+
+      /* =========================================================
+        画像圧縮処理
+    ========================================================= */
+      function compressImage(file, maxWidth = 1280, quality = 0.7) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+
+          reader.readAsDataURL(file);
+
+          reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+
+            img.onload = () => {
+              let width = img.width;
+              let height = img.height;
+
+              // 横幅が大きすぎる場合のみ縮小
+              if (width > maxWidth) {
+                height = height * (maxWidth / width);
+                width = maxWidth;
+              }
+
+              const canvas = document.createElement("canvas");
+              canvas.width = width;
+              canvas.height = height;
+
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(img, 0, 0, width, height);
+
+              canvas.toBlob(
+                (blob) => {
+                  if (!blob) {
+                    reject(new Error("圧縮に失敗しました"));
+                    return;
+                  }
+                  resolve(blob);
+                },
+                "image/jpeg",
+                quality,
+              );
+            };
+
+            img.onerror = reject;
+          };
+
+          reader.onerror = reject;
+        });
       }
 
-      // 公開URL取得
-      const { data: publicData } =
-        supabaseClient
-          .storage
+      /* =========================================================
+       写真アップロード処理
+    ========================================================= */
+      async function uploadPhoto(file) {
+        const compressedFile = await compressImage(file);
+
+        const fileName = `report_${Date.now()}_${file.name}`;
+
+        // ストレージへアップロード
+        const { error: uploadError } = await supabaseClient.storage
+          .from(STORAGE_BUCKET)
+          .upload(fileName, compressedFile, {
+            contentType: "image/jpeg",
+          });
+
+        if (uploadError) {
+          console.error("アップロード失敗:", uploadError.message);
+          return null;
+        }
+
+        // 公開URL取得
+        const { data: publicData } = supabaseClient.storage
           .from(STORAGE_BUCKET)
           .getPublicUrl(fileName);
 
-      // path と 公開URL を返す
-      return {
-        path: fileName,
-        url: publicData.publicUrl
-      };
-    }
+        // path と 公開URL を返す
+        return {
+          path: fileName,
+          url: publicData.publicUrl,
+        };
+      }
 
-    /* =========================================================
+      /* =========================================================
        フォーム送信処理
     ========================================================= */
-    form.addEventListener("submit", async (e) => {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-      e.preventDefault();
+        try {
+          status("送信中…");
 
-      try {
+          // 入力値取得
+          const place = placeInput.value.trim();
+          const latitude = latInput.value || null;
+          const longitude = lonInput.value || null;
+          const note = noteInput.value.trim() || null;
+          const photoFile = photoInput.files[0];
 
-        status("送信中…");
+          // 必須チェック
+          if (!place) {
+            alert("場所名称を入力してください");
+            status("エラー: 場所名称が未入力です");
+            return;
+          }
 
-        // 入力値取得
-        const place = placeInput.value.trim();
-        const latitude = latInput.value || null;
-        const longitude = lonInput.value || null;
-        const note = noteInput.value.trim() || null;
-        const photoFile = photoInput.files[0];
+          if (!latitude || !longitude) {
+            alert("位置情報を取得してください");
+            status("エラー: 緯度・経度が未入力です");
+            return;
+          }
 
-        // 必須チェック
-        if (!place) {
-          alert("場所名称を入力してください");
-          status("エラー: 場所名称が未入力です");
-          return;
-        }
+          if (!photoFile) {
+            alert("写真が未選択です。\n必ず撮影または選択してください。");
+            status("エラー: 写真が未選択です");
+            return;
+          }
 
-        if (!latitude || !longitude) {
-          alert("位置情報を取得してください");
-          status("エラー: 緯度・経度が未入力です");
-          return;
-        }
+          // 写真アップロード実行
+          const uploaded = await uploadPhoto(photoFile);
 
-        if (!photoFile) {
-          alert("写真が未選択です。\n必ず撮影または選択してください。");
-          status("エラー: 写真が未選択です");
-          return;
-        }
+          if (!uploaded) {
+            alert("写真アップロードに失敗しました");
+            status("エラー: 写真アップロード失敗");
+            return;
+          }
 
-        // 写真アップロード実行
-        const uploaded = await uploadPhoto(photoFile);
-
-        if (!uploaded) {
-          alert("写真アップロードに失敗しました");
-          status("エラー: 写真アップロード失敗");
-          return;
-        }
-
-        // データベースへINSERT
-        const { error } =
-          await supabaseClient
-            .from("reports")
-            .insert([{
+          // データベースへINSERT
+          const { error } = await supabaseClient.from("reports").insert([
+            {
               place_name: place,
               latitude: Number(latitude),
               longitude: Number(longitude),
               photo_path: uploaded.path,
               photo_url: uploaded.url,
               note: note,
-              reported_at: new Date().toISOString()
-            }]);
+              reported_at: new Date().toISOString(),
+            },
+          ]);
 
-        if (error) throw error;
+          if (error) throw error;
 
-        status("送信完了しました");
-        alert("報告を保存しました！");
+          status("送信完了しました");
+          alert("報告を保存しました！");
 
-        // フォーム初期化
-        form.reset();
-        preview.textContent = "未選択";
+          // フォーム初期化
+          form.reset();
+          preview.textContent = "未選択";
+        } catch (err) {
+          console.error(err);
+          status("エラー: " + err.message);
+          alert("エラーが発生しました: " + err.message);
+        }
+      });
+    </script>
 
-      } catch (err) {
-
-        console.error(err);
-        status("エラー: " + err.message);
-        alert("エラーが発生しました: " + err.message);
-
-      }
-    });
-  </script>
-
-  <script>
-    lucide.createIcons();
-  </script>
-
-</body>
-
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
 </html>
